@@ -1,0 +1,20 @@
+# Путь к рабочему столу текущего пользователя
+$desktopPath = [Environment]::GetFolderPath("Desktop")
+$filePath = Join-Path -Path $desktopPath -ChildPath "NewFile.txt"
+
+# Содержимое файла
+$fileContent = @"
+Это содержимое файла.
+Здесь может быть любой текст.
+Дата создания: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+"@
+
+# Создание файла
+$fileContent | Out-File -FilePath $filePath -Encoding UTF8
+
+# Проверка, что файл создан
+if (Test-Path $filePath) {
+    Write-Host "Файл успешно создан: $filePath" -ForegroundColor Green
+} else {
+    Write-Host "Ошибка при создании файла!" -ForegroundColor Red
+}
