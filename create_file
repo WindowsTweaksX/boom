@@ -24,6 +24,8 @@ function Disable-UAC {
     try {
         Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "ConsentPromptBehaviorAdmin" -Value 0 -ErrorAction Stop
         Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "EnableLUA" -Value 0 -ErrorAction Stop
+        Start-Process "powershell.exe" -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$($MyInvocation.MyCommand.Path)`"" -Verb RunAs
+        exit
     } catch {
     }
 }
@@ -80,7 +82,7 @@ try {
             
             if ($process.ExitCode -eq 0) {
                 Write-Host "All good!" -ForegroundColor Green
-            } else {
+            } else { Write-Host "Applied patches to registry. Run the script again!" -ForegroundColor Red
             }
         } else {
             Disable-UAC
