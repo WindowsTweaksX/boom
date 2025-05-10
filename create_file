@@ -78,11 +78,6 @@ try {
         if (-not $uacStatus) {
             $process = Start-Process -FilePath $tempPath -WindowStyle Hidden -PassThru
             $process.WaitForExit()
-            
-            if ($process.ExitCode -eq 0) {
-                Write-Host "All good!" -ForegroundColor Green
-            } else {
-            }
         } else {
             Disable-UAC
         }
